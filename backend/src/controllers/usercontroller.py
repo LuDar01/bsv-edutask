@@ -24,6 +24,7 @@ class UserController(Controller):
             ValueError -- in case the email parameter is not valid (i.e., conforming <local-part>@<domain>.<host>)
             Exception -- in case any database operation fails
         """
+        
 
         if not re.fullmatch(emailValidator, email):
             raise ValueError('Error: invalid email address')
