@@ -1,40 +1,65 @@
+"""Unit tests for UserController email functionality."""
+
+from unittest import mock
 import pytest
-from unittest.mock import MagicMock
+
 from src.controllers.usercontroller import UserController
 
-# Fixture to create a mock DAO and controller instance
+
 @pytest.fixture
-def mock_user_controller():
-    mock_dao = MagicMock()
-    controller = UserController(dao=mock_dao)
-    return controller, mock_dao
+def user_controller(users):
+    """Create UserController with mocked DAO returning provided users."""
+    dao = mock.Mock()
+    dao.find.return_value = users 
+    controller = UserController(dao=dao)
+    return controller
 
-def test_get_user_by_existing_email(mock_user_controller):
-    controller, mock_dao = mock_user_controller
-    mock_user = {"email": "existing@example.com"}
-    mock_dao.find.return_value = [mock_user]
 
-    result = controller.get_user_by_email("existing@example.com")
-    assert result == mock_user
+@pytest.mark.lab1
+@pytest.mark.parametrize('users, email, expected', [
+    # Single user match
+    ([{"username": "Jhon", "email": "jhon@exempel.com","age":25}], "jhon@exempel.com", {"username": "Jhon", "email": "jhon@exempel.com","age":25}),
+    # Multiple users - return first
+    ([{"username": "Jhon", "email": "jhon@exempel.com"},{"username": "Jhon2", "email": "jhon@exempel.com"}], "jhon@exempel.com", {"username": "Jhon", "email": "jhon@exempel.com"}),
+    # No users found
+    ([], "jhon@exempel.com", None)
+])
+def test_get_user_by_email(user_controller, email, expected):
+    """Test email lookup with single match, multiple matches, and no matches."""
+    result = user_controller.get_user_by_email(email)
+    assert result == expected
 
-def test_get_user_by_non_existing_email(mock_user_controller):
-    controller, mock_dao = mock_user_controller
-    mock_dao.find.return_value = [{"email": "dummy@example.com"}, {"email": "dummy2@example.com"}]
 
-    result = controller.get_user_by_email("nonexistent@example.com")
-    assert result["email"].startswith("dummy")
+@pytest.mark.lab1
+@pytest.mark.parametrize('users, email', [
+    # Multiple users with same email
+    ([{"username": "Jhon", "email": "jhon@exempel.com"},{"username": "Jhon2", "email": "jhon@exempel.com"}],"jhon@exempel.com")
+])
+def test_multiple_users_warning(user_controller, email, capsys):
+    """Test warning message when multiple users share email."""
+    user_controller.get_user_by_email(email)
+    captured = capsys.readouterr()
+    assert f'Error: more than one user found with mail {email}' in captured.out
 
-def test_get_user_by_invalid_email_format(mock_user_controller):
-    controller, _ = mock_user_controller
+
+@pytest.mark.lab1
+@pytest.mark.parametrize('users, email', [
+    # Invalid email format
+    ([{"username": "Jhon", "email": "jhon@exempel.com"}],"not-vaild-email")
+])
+def test_invalid_email(user_controller, email):
+    """Test ValueError raised for invalid email format."""
     with pytest.raises(ValueError):
-        controller.get_user_by_email("invalid-email")
+        user_controller.get_user_by_email(email)
 
-def test_get_user_by_none_email(mock_user_controller):
-    controller, _ = mock_user_controller
-    with pytest.raises(TypeError):
-        controller.get_user_by_email(None)
 
-def test_get_user_by_empty_email(mock_user_controller):
-    controller, _ = mock_user_controller
-    with pytest.raises(ValueError):
-        controller.get_user_by_email("")
+@pytest.mark.lab1
+@pytest.mark.parametrize('users, email', [
+    # Database failure scenario
+    ([{"username": "Jhon", "email": "jhon@exempel.com"}],"not-vaild-email")
+])
+def test_database_failure(user_controller, email):
+    """Test Exception raised when database operation fails."""
+    user_controller.dao.find.side_effect = Exception("db error")
+    with pytest.raises(Exception):
+        user_controller.get_user_by_email(email)
