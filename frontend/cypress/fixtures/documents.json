@@ -1,0 +1,4 @@
+[
+  { "_id": "1", "title": "Doc 1", "content": "This is document 1 with more than twenty characters" },
+  { "_id": "2", "title": "Doc 2", "content": "Second document here with long text as well" }
+]
