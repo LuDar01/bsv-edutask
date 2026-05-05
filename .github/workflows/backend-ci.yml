@@ -10,7 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    # Den här delen startar en databas i bakgrunden
     services:
       mongodb:
         image: mongo:latest
@@ -27,9 +26,12 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements.pip
+        python -m pip install --upgrade pip
+        pip install pytest pytest-mongodb pymongo flask flask-cors
+        # Installera från din fil om den finns
+        if [ -f requirements.pip ]; then pip install -r requirements.pip; fi
 
     - name: Run unit tests
       run: |
         cd backend
-        pytest test/test_usercontroller.py test/test_integration_dao.py
+        python -m pytest test/test_usercontroller.py test/test_integration_dao.py
