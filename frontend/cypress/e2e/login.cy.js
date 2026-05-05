@@ -23,7 +23,7 @@ describe('Logging into the system', () => {
 
   beforeEach(function () {
     // enter the main main page
-    cy.visit('http://localhost:3000')
+    cy.visit('http://localhost:3001')
   })
 
   it('starting out on the landing screen', () => {
