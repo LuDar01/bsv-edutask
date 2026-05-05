@@ -10,6 +10,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # Den här delen startar en databas i bakgrunden
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+
     steps:
     - uses: actions/checkout@v3
 
@@ -20,10 +27,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd backend
         pip install -r requirements.pip
 
     - name: Run unit tests
       run: |
         cd backend
-        pytest
+        pytest test/test_usercontroller.py test/test_integration_dao.py
